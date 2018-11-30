@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http:/www.thymeleaf.org">
+<head th:replace="layouts\deafult :: head-index"></head>
+<body>
+	<div th:fragment = "signUpForm">
+		<div class="container" id="signUpForm">
+			<div class="row">
+				<div class="col-6 col-md-auto">
+					<form>
+					  <div class="form-group">
+					    <label for="username">Username</label>
+					    <input type="email" class="form-control" id="username" aria-describedby="emailHelp" placeholder="Enter email">
+					    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+					  </div>
+					  <div class="form-group">
+					    <label for="password">Password</label>
+					    <input type="password" class="form-control" id="password" placeholder="Create Password">
+					  </div>
+					  <div class="form-group">
+					    <label for="name">Full Name</label>
+					    <input type="text" class="form-control" id="name" placeholder="Enter your name">
+					  </div>
+					  <div class="form-group">
+						  <label for="code">Employee's Code</label>
+						  <input type="text" class="form-control" id="code" aria-describedby="codeHelp" placeholder="Enter your Employee id">
+						  <small id="codeHelp" class="form-text text-muted">This is the code your company granted you for identification</small>
+					  </div>
+					  <button type="button" class="btn btn-primary">Sign up!</button>
+					 </form>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

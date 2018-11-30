@@ -11,6 +11,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -18,22 +19,24 @@ import javax.validation.constraints.Size;
 @Table (name = "employees")
 public class Employee extends Entities {
 	
-	@NotNull
+	@NotEmpty
 	@Email
 	@Column(name = "username")
-	private String email;
+	@Size(max = 200)
+	private String username;
 	
 	@NotNull
+	@Size(max = 200)
 	@Column(name = "password")
 	private String password;
 	
 	@NotNull
 	@Column(name = "name")
-	@Size(max = 60)
+	@Size(max = 200)
 	private String name;
 	
 	@Column(name = "code")
-	@Size(max = 20)
+	@Size(max = 200)
 	private String code;
 	
 	@OneToOne
@@ -46,12 +49,12 @@ public class Employee extends Entities {
 				orphanRemoval = true)
 	private List<Report> reports;
 
-	public String getEmail() {
-		return email;
+	public String getUsername() {
+		return username;
 	}
 
-	public void setEmail(String email) {
-		this.email = email;
+	public void setEmail(String username) {
+		this.username = username;
 	}
 
 	public String getPassword() {
@@ -92,6 +95,10 @@ public class Employee extends Entities {
 
 	public void setReports(List<Report> reports) {
 		this.reports = reports;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 	
 }

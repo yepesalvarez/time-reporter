@@ -17,15 +17,15 @@ public class Project extends Entities {
 
 	@NotNull
 	@Column(name = "name")
-	@Size(max = 100)
+	@Size(max = 200)
 	private String name;
 	
 	@Column(name = "code")
-	@Size(max = 20)
+	@Size(max = 200)
 	private String code;
 	
 	@Column(name = "client")
-	@Size(max = 100)
+	@Size(max = 200)
 	private String client;
 	
 	@OneToMany(mappedBy = "project",

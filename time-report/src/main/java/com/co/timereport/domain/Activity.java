@@ -24,8 +24,7 @@ public class Activity extends Entities {
 	
 	@NotNull
 	@Column(name = "time_duration")
-	@DateTimeFormat(pattern = "HH:mm:ss")
-	private Date time;
+	private Date timeDuration;
 	
 	@NotNull
 	@Column(name = "name")
@@ -33,7 +32,7 @@ public class Activity extends Entities {
 	private String name;
 	
 	@Column(name = "description")
-	@Size(max = 2000)
+	@Size(max = 500)
 	private String description;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -48,12 +47,12 @@ public class Activity extends Entities {
 		this.date = date;
 	}
 
-	public Date getTime() {
-		return time;
+	public Date getTimeDuration() {
+		return timeDuration;
 	}
 
-	public void setTime(Date time) {
-		this.time = time;
+	public void setTimeDuration(Date timeDuration) {
+		this.timeDuration = timeDuration;
 	}
 
 	public String getName() {
@@ -79,4 +78,5 @@ public class Activity extends Entities {
 	public void setReport(Report report) {
 		this.report = report;
 	}
+	
 }

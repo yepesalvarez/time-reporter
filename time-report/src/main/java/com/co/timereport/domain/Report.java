@@ -25,8 +25,8 @@ public class Report extends Entities {
 	private Date date;
 	
 	@NotNull
-	@Column(name = "time_duration")
-	private Date time;
+	@Column(name = "worked_time")
+	private Date workedTime;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "employee_id", referencedColumnName = "id")
@@ -51,11 +51,11 @@ public class Report extends Entities {
 	}
 
 	public Date getTime() {
-		return time;
+		return workedTime;
 	}
 
-	public void setTime(Date time) {
-		this.time = time;
+	public void setTime(Date workedTime) {
+		this.workedTime = workedTime;
 	}
 
 	public List<Activity> getActivities() {
@@ -81,8 +81,13 @@ public class Report extends Entities {
 	public void setProject(Project project) {
 		this.project = project;
 	}
-	
-	
-	
 
+	public Date getWorkedTime() {
+		return workedTime;
+	}
+
+	public void setWorkedTime(Date workedTime) {
+		this.workedTime = workedTime;
+	}
+	
 }
