@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,6 +27,7 @@ import com.co.timereport.service.EmployeeService;
 import com.co.timereport.service.RoleService;
 
 @RestController
+@RequestMapping(value = "/api")
 public class EmployeeController extends AbstractController {
 	
 	@Autowired
@@ -40,7 +42,7 @@ public class EmployeeController extends AbstractController {
 	@Autowired
 	ModelMapper modelMapper;
 	//-------------------------------------------------------------------------------------------
-	@PostMapping(value = "/api/employee")
+	@PostMapping(value = "/employee")
 	public ResponseEntity<?> createEmployee(@RequestBody EmployeeInDto employeeDto){			
 		if(employeeService.getEmployeeByUsername(employeeDto.getUsername())!=null) {
 			return new ResponseEntity<>(getStatusConflict(), HttpStatus.CONFLICT);
@@ -54,7 +56,7 @@ public class EmployeeController extends AbstractController {
 
 	}
 	//-------------------------------------------------------------------------------------------
-	@PutMapping(value = "/api/employee")
+	@PutMapping(value = "/employee")
 	public ResponseEntity<?> updateEmployee(@RequestBody EmployeeInDto employeeDto){
 		if (employeeDto.getId() == null || employeeDto.getUsername() == null || 
 				employeeDto.getName() == null || employeeDto.getPassword() == null ||
@@ -67,21 +69,21 @@ public class EmployeeController extends AbstractController {
 				, HttpStatus.OK);
 	}
 	//-------------------------------------------------------------------------------------------
-	@DeleteMapping(value ="/api/employee/{id}")
+	@DeleteMapping(value ="/employee/{id}")
 	public ResponseEntity<String> deleteEmployeeById(@PathVariable ("id") Long id){
 		if (employeeService.deleteEmployee(id)) 
 			return new ResponseEntity<>(getStatusOK(), HttpStatus.OK);
 		return new ResponseEntity<>(getStatusNotFound(), HttpStatus.NOT_FOUND);
 	}
 	//-------------------------------------------------------------------------------------------
-	@DeleteMapping(value = "/api/employee")
+	@DeleteMapping(value = "/employee")
 	public ResponseEntity<?> deleteEmployee(@RequestBody EmployeeInDto employee){
 		if(employeeService.deleteEmployee(modelMapper.map(employee, Employee.class)))
 			return new ResponseEntity<>(getStatusOK(), HttpStatus.OK);
 		return new ResponseEntity<>(getStatusNotFound(), HttpStatus.NOT_FOUND);
 	}
 	//-------------------------------------------------------------------------------------------
-	@GetMapping(value = "/api/employee")
+	@GetMapping(value = "/employee")
 	public ResponseEntity<?> getAllEmployees(){
 		List<Employee> employees = employeeService.getAllEmployees();
 		if(employees.isEmpty())
@@ -92,7 +94,7 @@ public class EmployeeController extends AbstractController {
 					, HttpStatus.OK);
 	}
 	//-------------------------------------------------------------------------------------------
-	@GetMapping(value = "/api/employee/{id}")
+	@GetMapping(value = "/employee/{id}")
 	public ResponseEntity<?> getEmployeeById(@PathVariable ("id") Long id){
 		Employee employee = employeeService.getEmployeeById(id);
 		if (employee == null)
@@ -102,7 +104,7 @@ public class EmployeeController extends AbstractController {
 							 
 	}
 	//-------------------------------------------------------------------------------------------
-	@PostMapping(value = "api/code/employee")
+	@PostMapping(value = "code/employee")
 	public ResponseEntity<?> getEmployeeByCode(@RequestParam (value = "code") String code){
 		Employee employee = employeeService.getEmployeeByCode(code);
 		if(employee == null)
@@ -111,7 +113,7 @@ public class EmployeeController extends AbstractController {
 				, HttpStatus.OK);
 	}
 	//-------------------------------------------------------------------------------------------
-	@PostMapping(value = "api/role/employee")
+	@PostMapping(value = "role/employee")
 	public ResponseEntity<?> getEmployeesByRole(@RequestParam (value = "role") String role){
 		Role roleFound = roleService.getRoleByName(role);
 		if (role == null)
@@ -124,7 +126,7 @@ public class EmployeeController extends AbstractController {
 				, HttpStatus.OK);
 	}
 	//-------------------------------------------------------------------------------------------
-	@PostMapping(value = "api/username/employee")
+	@PostMapping(value = "username/employee")
 	public ResponseEntity<?> getEmployeeByUserName(@RequestParam ("username") String username){
 		Employee employee = employeeService.getEmployeeByUsername(username);
 		if(employee == null)

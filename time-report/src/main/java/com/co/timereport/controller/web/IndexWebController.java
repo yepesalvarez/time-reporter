@@ -5,9 +5,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import com.co.timereport.controller.AbstractController;
+import com.co.timereport.domain.dto.EmployeeInDto;
 
 @Controller
-public class IndexController extends AbstractController {
+public class IndexWebController extends AbstractController {
 	
 	@GetMapping(value = "/")
 	public String index(Model model) {	
@@ -18,6 +19,7 @@ public class IndexController extends AbstractController {
 	@GetMapping(value = "/signup")
 	public String indexSignUp(Model model) {
 		model.addAttribute("indexPage", "SignUp");
+		model.addAttribute("employeeInDto", new EmployeeInDto());
 		return "index";
 	}
 	
