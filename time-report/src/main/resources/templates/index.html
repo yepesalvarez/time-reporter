@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http:/www.thymeleaf.org">
-<head th:replace="layouts\deafult :: head-index"></head>
+<head th:replace="layouts\deafault :: head-index"></head>
 <body>
-	<header th:replace="layouts\deafult :: header"></header>
+	<header th:replace="layouts\deafault :: header"></header>
 	<ul class="nav nav-tabs">
 	  <li class="nav-item">
 	    <a class="nav-link" th:classappend="${indexPage == 'Login'} ? active : '' " th:href="@{/}" >Login</a>

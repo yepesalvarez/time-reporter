@@ -6,8 +6,7 @@ import com.co.timereport.domain.Project;
 
 public interface ProjectService {
 	
-	Project createProject(Project project);
-	Project updateProject(Project project);
+	Project saveProject(Project project);
 	boolean deleteProject(Project project);
 	boolean deleteProject(Long id);
 	Project getProjectById(Long id);

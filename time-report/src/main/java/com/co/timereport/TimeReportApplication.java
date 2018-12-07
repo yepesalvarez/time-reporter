@@ -43,7 +43,7 @@ public class TimeReportApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TimeReportApplication.class, args);
 	}
-	
+
 	@Value("${spring.datasource.url}") String urlDb;
 	@Value("${spring.datasource.username}") String username;
 	@Value("${spring.datasource.password}") String passw;

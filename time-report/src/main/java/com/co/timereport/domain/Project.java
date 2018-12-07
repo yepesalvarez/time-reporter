@@ -28,11 +28,15 @@ public class Project extends Entities {
 	@Size(max = 200)
 	private String client;
 	
+	@Column(name = "description")
+	@Size(max = 500)
+	private String description;
+	
 	@OneToMany(mappedBy = "project",
 				fetch = FetchType.LAZY,
 				cascade = CascadeType.ALL,
 				orphanRemoval = true)
-		private List<Report> reports;
+	private List<Report> reports;
 
 	public String getName() {
 		return name;
@@ -64,6 +68,14 @@ public class Project extends Entities {
 
 	public void setReports(List<Report> reports) {
 		this.reports = reports;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 	
 }

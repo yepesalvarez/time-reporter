@@ -2,6 +2,8 @@ package com.co.timereport.service.impl;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,14 +17,17 @@ public class ProjectServiceImpl implements ProjectService {
 	@Autowired
 	ProjectRepository projectRepository;
 	
+	private static final Logger lOGGER = LoggerFactory.getLogger(ProjectServiceImpl.class);
+	
 	@Override
-	public Project createProject(Project project) {
-		return projectRepository.save(project);
-	}
-
-	@Override
-	public Project updateProject(Project project) {
-		return projectRepository.save(project);
+	public Project saveProject(Project project) {
+		try {
+			return projectRepository.save(project);
+		}catch(Exception e) {	
+			lOGGER.debug(e.getMessage());
+			return null;
+		}
+		
 	}
 
 	@Override
@@ -47,32 +52,27 @@ public class ProjectServiceImpl implements ProjectService {
 
 	@Override
 	public Project getProjectById(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		return projectRepository.findById(id).orElse(null);
 	}
 
 	@Override
 	public Project getProjectByCode(String code) {
-		// TODO Auto-generated method stub
-		return null;
+		return projectRepository.findByCode(code);
 	}
 
 	@Override
 	public List<Project> getProjectsByName(String name) {
-		// TODO Auto-generated method stub
-		return null;
+		return projectRepository.getProjectsByName(name);
 	}
 
 	@Override
 	public List<Project> getProjectsByClient(String client) {
-		// TODO Auto-generated method stub
-		return null;
+		return projectRepository.getProjectsByClient(client);
 	}
 
 	@Override
 	public List<Project> getAllProjects() {
-		// TODO Auto-generated method stub
-		return null;
+		return (List<Project>) projectRepository.findAll();
 	}
 
 }
