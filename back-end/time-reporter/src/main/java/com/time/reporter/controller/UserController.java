@@ -1,6 +1,7 @@
 package com.time.reporter.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,7 +12,7 @@ import com.time.reporter.domain.User;
 import com.time.reporter.service.UserService;
 
 @RestController
-@RequestMapping(value = "api")
+@RequestMapping(value = "/api")
 public class UserController {
 	
 	@Autowired
@@ -22,6 +23,7 @@ public class UserController {
 		return "hi user";
 	}
 	
+	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping(value = "/user")
 	public User adminOnlyAvailablePageTest(@RequestBody User user) {	
 		return userService.saveUser(user);

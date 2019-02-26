@@ -14,7 +14,11 @@ public class RoleBuilder {
 	RoleRepository roleRepository;
 		
 	public Role roleEntityToRole(RoleEntity roleEntity) {
-		return new Role(roleEntity.getName(), roleEntity.getDescription());
+		if (roleEntity == null) {
+			return null;
+		} else {
+			return new Role(roleEntity.getName(), roleEntity.getDescription());
+		}
 	}
 	
 	public RoleEntity roleToRoleEntity(Role role) {
@@ -26,8 +30,6 @@ public class RoleBuilder {
 		roleEntity.setName(role.getName());
 		roleEntity.setDescription(role.getDescription());
 		return roleEntity;
-		
 	}
-	
 
 }

@@ -1,6 +1,6 @@
 package com.time.reporter.service;
 
-import org.jboss.logging.Logger;
+//import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import com.time.reporter.persistence.repository.UserRepository;
 @Service
 public class UserService {
 
-	private static final Logger LOGGER = Logger.getLogger(UserService.class);
+	//private static final Logger LOGGER = Logger.getLogger(UserService.class);
 	
 	@Autowired
 	private UserBuilder userBuilder;

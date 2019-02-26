@@ -17,9 +17,11 @@ public class UserBuilder {
 	UserRepository userRepository;
 
 	public User userEntityToUser(UserEntity userEntity) {
-		
-		return new User(userEntity.getUsername(), userEntity.getPassword(), roleBuilder.roleEntityToRole(userEntity.getRole()));
-		
+		if(userEntity == null) {
+			return null;
+		} else {
+			return new User(userEntity.getUsername(), userEntity.getPassword(), roleBuilder.roleEntityToRole(userEntity.getRole()), true);
+		}
 	}
 	
 	public UserEntity userToUserEntity(User user) {
