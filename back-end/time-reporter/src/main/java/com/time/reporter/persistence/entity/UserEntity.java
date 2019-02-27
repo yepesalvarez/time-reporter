@@ -17,15 +17,18 @@ public class UserEntity extends AbstractEntity {
 
 	@Column(name = "username", unique = true)
 	@NotNull
-	String username;
+	private String username;
 	
 	@Column(name = "password")
 	@NotNull
-	String password;
+	private String password;
+	
+	@Column(name = "enabled")
+	boolean enabled;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "role_id")
-	RoleEntity role;
+	private RoleEntity role;
 
 	public String getUsername() {
 		return username;
@@ -50,7 +53,15 @@ public class UserEntity extends AbstractEntity {
 	public void setRole(RoleEntity role) {
 		this.role = role;
 	}
-	
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
 	@Override
 	public boolean equals(Object object) {
 		if (!(object instanceof UserEntity)) {
@@ -73,5 +84,5 @@ public class UserEntity extends AbstractEntity {
 				.append(this.getUsername())
 				.toHashCode();
 	}
-
+	
 }

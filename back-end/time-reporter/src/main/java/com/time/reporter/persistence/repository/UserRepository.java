@@ -8,6 +8,6 @@ import com.time.reporter.persistence.entity.UserEntity;
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-	UserEntity findByUsername (String username);
+	UserEntity findByUsername(String username);
 	
 }

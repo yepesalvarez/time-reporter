@@ -15,9 +15,9 @@ public class CustomUserDetails implements UserDetails {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 5617941324667964458L;
-	
-	private User user;
+	private static final long serialVersionUID = 2943288458847433679L;
+
+private User user;
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -63,5 +63,4 @@ public class CustomUserDetails implements UserDetails {
 	public void setUser(User user) {
 		this.user = user;
 	}
-
 }
