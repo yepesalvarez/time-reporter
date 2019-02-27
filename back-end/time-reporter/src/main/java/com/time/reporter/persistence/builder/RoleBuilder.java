@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.time.reporter.domain.Role;
+import com.time.reporter.domain.enums.Roles;
 import com.time.reporter.persistence.entity.RoleEntity;
 import com.time.reporter.persistence.repository.RoleRepository;
 
@@ -32,4 +33,13 @@ public class RoleBuilder {
 		return roleEntity;
 	}
 
+	public RoleEntity roleStringToRoleEntity(String role) {
+		RoleEntity roleEntity = roleRepository.findByName(role);
+		if (roleEntity != null) {
+			return roleEntity;
+		} else {
+			roleEntity = roleRepository.findByName(Roles.USER.getDescription());
+		}
+		return roleEntity;
+	}
 }

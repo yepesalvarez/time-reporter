@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.time.reporter.domain.User;
+import com.time.reporter.domain.dto.UserDto;
 import com.time.reporter.service.UserService;
 
 @RestController
@@ -25,8 +25,8 @@ public class UserController {
 	
 	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping(value = "/user")
-	public User adminOnlyAvailablePageTest(@RequestBody User user) {	
-		return userService.saveUser(user);
+	public UserDto saveUser(@RequestBody UserDto userDto) {	
+		return userService.saveUser(userDto);
 	}
 
 }

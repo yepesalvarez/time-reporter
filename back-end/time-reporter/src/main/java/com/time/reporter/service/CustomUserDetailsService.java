@@ -1,12 +1,13 @@
 package com.time.reporter.service;
 
+import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.time.reporter.domain.User;
+import com.time.reporter.domain.exceptions.UserDoesNotExistException;
 import com.time.reporter.persistence.builder.UserBuilder;
 import com.time.reporter.persistence.repository.UserRepository;
 
@@ -19,6 +20,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Autowired
 	private UserBuilder userBuilder;
 	
+	private static final Logger LOGGER = Logger.getLogger(CustomUserDetailsService.class);
+	
 	@Override
 	public UserDetails loadUserByUsername(String username) {
 		User user = userBuilder.userEntityToUser(userRepository.findByUsername(username));
@@ -27,7 +30,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 			userDetails = new CustomUserDetails();
 			userDetails.setUser(user);
 		} else {
-			throw new UsernameNotFoundException(username + " does not exists");
+			LOGGER.error(new UserDoesNotExistException());
+			throw new UserDoesNotExistException();
 		}
 		return userDetails;
 	}
