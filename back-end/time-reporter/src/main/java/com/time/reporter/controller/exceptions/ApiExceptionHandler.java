@@ -2,6 +2,7 @@ package com.time.reporter.controller.exceptions;
 
 import org.jboss.logging.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,7 +21,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler({
-		UserNotModifiableException.class, UserDoesNotExistException.class, InvalidJwtAuthenticationException.class, DisabledException.class
+		UserNotModifiableException.class, UserDoesNotExistException.class, InvalidJwtAuthenticationException.class, DisabledException.class, BadCredentialsException.class
 	})
 	@ResponseBody
 	public ErrorMessage badRequest(Exception exception) {
