@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,12 +26,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	
 	@Autowired
     JwtTokenProvider jwtTokenProvider;
-	
-	@Override
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-	}
-	
+		
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.csrf().disable()
@@ -41,8 +35,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.and()
 			.authorizeRequests()
 			.antMatchers(HttpMethod.POST, "/login").permitAll()
-			.antMatchers(HttpMethod.GET, "/api/user").permitAll()
-			.antMatchers(HttpMethod.POST, "/api/user").hasRole("ADMIN")
+			.antMatchers(HttpMethod.GET, "/api/users").permitAll()
 			.anyRequest().authenticated()
 			.and()
 			.apply(new JwtConfigurer(jwtTokenProvider));

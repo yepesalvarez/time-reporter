@@ -18,13 +18,13 @@ public class UserController {
 	@Autowired
 	UserService userService;
 	
-	@GetMapping(value = "/user")
+	@GetMapping(value = "/users")
 	public String userAvailablePageTest() {
 		return "hi user";
 	}
 	
 	@PreAuthorize("hasRole('ADMIN')")
-	@PostMapping(value = "/user")
+	@PostMapping(value = "/users")
 	public UserDto saveUser(@RequestBody UserDto userDto) {	
 		return userService.saveUser(userDto);
 	}
