@@ -1,12 +1,24 @@
 package com.time.reporter.domain.dto;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel(value = "user")
 public class UserDto {
 	
+	@ApiModelProperty(notes = "unique identifier for user in the system", position = 5)
 	private Long id;
+	@ApiModelProperty(notes = "username for loggin", required = true, position = 1)
 	private String username;
+	@ApiModelProperty(notes = "password for loggin", required = true, position = 2)
 	private String password;
+	@ApiModelProperty(notes = "Role name", example = "USER", position = 4)
 	private String  role;
+	@ApiModelProperty(notes = "establish whether the user would be able to use the system or not, default value : false"
+			, allowableValues = "true/false", position = 3)
 	private boolean enabled;
+	@ApiModelProperty(notes = "Bearer json web token for requests, it must be sent inside the header in the Authorization value in order to access to protected urls"
+			, example = "Bearer eyJ0eXAiOiJKV1QiLCJhbG..", position = 6)
 	private String token;
 	
 	public UserDto(Long id, String username, String password, String role, boolean enabled) {

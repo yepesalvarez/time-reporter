@@ -11,7 +11,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.time.reporter.config.jwt.JwtTokenProvider;
-import com.time.reporter.domain.User;
 import com.time.reporter.domain.dto.UserDto;
 import com.time.reporter.persistence.builder.UserBuilder;
 import com.time.reporter.persistence.entity.UserEntity;
@@ -34,7 +33,7 @@ public class LoginService {
 	
     public static final Logger LOGGER = Logger.getLogger(LoginService.class);
     
-	public UserDto login(User user) {
+	public UserDto login(UserDto user) {
 		 String username = user.getUsername();
          authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, user.getPassword()));
          UserEntity userEntity = userRepository.findByUsername(username);
