@@ -1,6 +1,6 @@
 package com.time.reporter.domain.exceptions;
 
-public class UserNotModifiableException extends RuntimeException {
+public class UserInvalidDataException extends RuntimeException {
 
 	/**
 	 * 
@@ -9,7 +9,7 @@ public class UserNotModifiableException extends RuntimeException {
 	
 	private static final String MESSAGE = "Not valid parameters for user info saving";
 
-	public UserNotModifiableException() {
+	public UserInvalidDataException() {
 		super(MESSAGE);		
 	}
 

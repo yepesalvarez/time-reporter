@@ -11,6 +11,7 @@ import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -61,6 +62,9 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String token) {
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(getUsername(token));
+        if (!userDetails.isEnabled()) {
+        	throw new DisabledException("User is disabled"); 
+        }
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
@@ -76,10 +80,14 @@ public class JwtTokenProvider {
         return null;
     }
 
-    public boolean validateToken(String token) {
+    public void validateDateToken(String token) {
         try {
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            return !claims.getBody().getExpiration().before(new Date());
+            boolean tokenIsExpired = claims.getBody().getExpiration().before(new Date());
+            if (tokenIsExpired) {
+            	LOGGER.error(new InvalidJwtAuthenticationException());
+                throw new InvalidJwtAuthenticationException(); 
+            }           
         } catch (JwtException | IllegalArgumentException e) {
         	LOGGER.error(new InvalidJwtAuthenticationException());
             throw new InvalidJwtAuthenticationException();
