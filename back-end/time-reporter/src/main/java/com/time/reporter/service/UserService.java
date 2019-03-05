@@ -8,6 +8,8 @@ import javax.validation.Validator;
 
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -66,6 +68,11 @@ public class UserService {
 	
 	public List<UserDto> getAllUsers() {
 		return userRepository.findAll().stream().map(user -> userBuilder.userEntityToUserDto(user)).collect(Collectors.toList());
+	}
+	
+	public List<UserDto> getAllUsers(int page, int size, String sort, String propertyOrderBy) {
+		return userRepository.findAll(PageRequest.of(page, size, Direction.fromString(sort), propertyOrderBy))
+				.stream().map(user -> userBuilder.userEntityToUserDto(user)).collect(Collectors.toList());
 	}
 	
 	public String removeUser(UserDto userDto) {

@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.time.reporter.config.jwt.JwtTokenProvider;
@@ -39,9 +38,6 @@ public class LoginService {
 		 String username = user.getUsername();
 		 authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, user.getPassword()));
 		 UserEntity userEntity = userRepository.findByUsername(username);
-		 if (userEntity == null) {
-		 	throw new UsernameNotFoundException("Username " + username + "not found");
-		 }
 		 List<String> rolesUser = new ArrayList<>();
 		 rolesUser.add(userEntity.getRole().getName());
 		 String token = jwtTokenProvider.createToken(username, rolesUser);

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.time.reporter.domain.dto.UserDto;
@@ -57,6 +58,19 @@ public class UserController {
 	@GetMapping
 	public List<UserDto> getAllUsers() {	
 		return userService.getAllUsers();
+	}
+	
+	@PreAuthorize("hasRole('ADMIN')")
+	@ApiOperation(value = "Returns users in the system by pages, only administrator users can perform this action", httpMethod = "GET")
+	@ApiImplicitParams({
+	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
+	})
+	@GetMapping(value = "/page/{pageNumber}/{pageSize}")
+	public List<UserDto> getAllUsers(@PathVariable("pageNumber") int pageNumber,
+										@PathVariable("pageSize") int pageSize,
+										@RequestParam("order") String order,
+										@RequestParam("property") String property) {	
+		return userService.getAllUsers(pageNumber, pageSize, order, property);
 	}
 	
 	@PreAuthorize("hasRole('ADMIN')")
