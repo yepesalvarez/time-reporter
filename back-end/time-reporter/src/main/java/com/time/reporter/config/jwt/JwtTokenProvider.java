@@ -52,11 +52,11 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date validity = new Date(now.getTime() + validityInMilliseconds);
 
-        return Jwts.builder()//
-            .setClaims(claims)//
-            .setIssuedAt(now)//
-            .setExpiration(validity)//
-            .signWith(SignatureAlgorithm.HS256, secretKey)//
+        return Jwts.builder()
+            .setClaims(claims)
+            .setIssuedAt(now)
+            .setExpiration(validity)
+            .signWith(SignatureAlgorithm.HS256, secretKey)
             .compact();
     }
 
@@ -85,7 +85,7 @@ public class JwtTokenProvider {
             Jws<Claims> claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
             boolean tokenIsExpired = claims.getBody().getExpiration().before(new Date());
             if (tokenIsExpired) {
-            	LOGGER.error(new InvalidJwtAuthenticationException());
+            	LOGGER.error(new InvalidJwtAuthenticationException().getMessage());
                 throw new InvalidJwtAuthenticationException(); 
             }           
         } catch (JwtException | IllegalArgumentException e) {

@@ -3,6 +3,9 @@ package com.time.reporter.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
+
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.time.reporter.domain.dto.UserDto;
 import com.time.reporter.domain.enums.Roles;
+import com.time.reporter.domain.exceptions.RoleDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserAlreadyExistException;
 import com.time.reporter.domain.exceptions.UserDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserInvalidDataException;
@@ -34,18 +38,23 @@ public class UserService {
 	@Autowired
 	private RoleService roleService;
 	
+	@Autowired
+    protected Validator validator;
+	
+	public static final String USER_REMOVED = "user successfully removed";
+	
 	public UserDto saveUser(UserDto userDto) {
 		UserEntity userEntity = validateUserDto(userDto);
 		if (userEntity != null) {
-			LOGGER.error(new UserAlreadyExistException());
+			LOGGER.error(new UserAlreadyExistException().getMessage());
 			throw new UserAlreadyExistException();
 		}
 		if(userDto.getRole() == null) {
 			userDto.setRole(Roles.USER.toString());
 		}else {
-			if(roleService.getRoleByName(userDto.getRole())== null) {
-				LOGGER.error(new UserInvalidDataException().getMessage());
-				throw new UserInvalidDataException();
+			if(roleService.getRoleByName(userDto.getRole()) == null) {
+				LOGGER.error(new RoleDoesNotExistException().getMessage());
+				throw new RoleDoesNotExistException();
 			}
 		}
 		return persistUser(userDto);
@@ -59,18 +68,20 @@ public class UserService {
 		return userRepository.findAll().stream().map(user -> userBuilder.userEntityToUserDto(user)).collect(Collectors.toList());
 	}
 	
-	public void removeUser(UserDto userDto) {
+	public String removeUser(UserDto userDto) {
 		try {
 			userRepository.delete(userBuilder.userDtoToUserEntity(userDto));
+			return USER_REMOVED;
 		} catch (UserDoesNotExistException e) {
 			LOGGER.error(e);
 			throw new UserDoesNotExistException();
 		}
 	}
 	
-	public void removeUser(Long idUser) {
+	public String removeUser(Long idUser) {
 		try {
 			userRepository.deleteById(idUser);
+			return USER_REMOVED;
 		} catch (UserDoesNotExistException e) {
 			LOGGER.error(e);
 			throw new UserDoesNotExistException();
@@ -92,12 +103,18 @@ public class UserService {
 			LOGGER.error(new UserInvalidDataException().getMessage());
 			throw new UserInvalidDataException();
 		}
+		validator.validate(userDto.getPassword());
 		return userRepository.findByUsername(userDto.getUsername());
 	}
 	
 	public UserDto persistUser(UserDto userDto) {
-		userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
-		return userBuilder.userEntityToUserDto(userRepository.save(
-				userBuilder.userDtoToUserEntity(userDto)));
+		try {
+			userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+			return userBuilder.userEntityToUserDto(userRepository.save(
+					userBuilder.userDtoToUserEntity(userDto)));
+		} catch (ConstraintViolationException e) {
+			LOGGER.error(e.getMessage());
+			throw new UserInvalidDataException();
+		}	
 	}
 }

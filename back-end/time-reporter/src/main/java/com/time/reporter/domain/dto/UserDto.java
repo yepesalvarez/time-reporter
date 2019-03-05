@@ -1,5 +1,8 @@
 package com.time.reporter.domain.dto;
 
+
+import javax.validation.constraints.Pattern;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -11,6 +14,7 @@ public class UserDto {
 	@ApiModelProperty(notes = "username for loggin", required = true, position = 1)
 	private String username;
 	@ApiModelProperty(notes = "password for loggin", required = true, position = 2)
+	@Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=*])(?=\\S+$).{8,160}$")
 	private String password;
 	@ApiModelProperty(notes = "Role name", example = "USER", position = 4)
 	private String  role;

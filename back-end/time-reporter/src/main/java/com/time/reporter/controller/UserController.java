@@ -2,6 +2,8 @@ package com.time.reporter.controller;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,21 +24,18 @@ import io.swagger.annotations.ApiOperation;
 
 @RestController
 @Api(value = "Users Management API", tags = "users")
-@PreAuthorize("hasRole('ADMIN')")
 @RequestMapping(value = "/api/users")
 public class UserController {
 	
 	@Autowired
 	UserService userService;
 	
-	public static final String USER_REMOVED = "user successfully removed";
-	
 	@ApiOperation(value = "Creates a new user in the system, only administrator users can perform this action", httpMethod = "POST")
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
 	})
 	@PostMapping
-	public UserDto saveUser(@RequestBody UserDto userDto) {	
+	public UserDto saveUser(@Valid @RequestBody UserDto userDto) {	
 		return userService.saveUser(userDto);
 	}
 	
@@ -50,6 +49,7 @@ public class UserController {
 		return userService.getUserById(id);
 	}
 	
+	@PreAuthorize("hasRole('ADMIN')")
 	@ApiOperation(value = "Returns all users in the system, only administrator users can perform this action", httpMethod = "GET")
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
@@ -59,24 +59,24 @@ public class UserController {
 		return userService.getAllUsers();
 	}
 	
-	@ApiOperation(value = "Removes a user in the system searching by id, only administrator users can perform this action", httpMethod = "GET")
+	@PreAuthorize("hasRole('ADMIN')")
+	@ApiOperation(value = "Removes a user in the system searching by id, only administrator users can perform this action", httpMethod = "DELETE")
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
 	})
 	@DeleteMapping("/{id}")
 	public String removeUserById(@PathVariable("id") Long id) {	
-		userService.removeUser(id);
-		return USER_REMOVED;
+		return userService.removeUser(id);
 	}
 	
-	@ApiOperation(value = "Removes a user in the system, only administrator users can perform this action", httpMethod = "GET")
+	@PreAuthorize("hasRole('ADMIN')")
+	@ApiOperation(value = "Removes a user in the system, only administrator users can perform this action", httpMethod = "DELETE")
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
 	})
 	@DeleteMapping
 	public String removeUser(@RequestBody UserDto userDto) {	
-		userService.removeUser(userDto);
-		return USER_REMOVED;
+		return userService.removeUser(userDto);
 	}
 
 }

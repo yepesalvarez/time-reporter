@@ -7,6 +7,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -17,10 +18,12 @@ public class UserEntity extends AbstractEntity {
 
 	@Column(name = "username", unique = true)
 	@NotNull
+	@Size(max = 255, min = 1)
 	private String username;
 	
 	@Column(name = "password")
 	@NotNull
+	@Size(max = 300, min = 8)
 	private String password;
 	
 	@Column(name = "enabled")

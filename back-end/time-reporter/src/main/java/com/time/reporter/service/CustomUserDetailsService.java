@@ -30,7 +30,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 			userDetails = new CustomUserDetails();
 			userDetails.setUser(user);
 		} else {
-			LOGGER.error(new UserDoesNotExistException());
+			LOGGER.error(new UserDoesNotExistException().getMessage() + ": " + username);
 			throw new UserDoesNotExistException();
 		}
 		return userDetails;

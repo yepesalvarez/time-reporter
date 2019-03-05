@@ -8,6 +8,7 @@ import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 @Entity
 @Table (name = "role")
@@ -15,9 +16,11 @@ public class RoleEntity extends AbstractEntity {
 
 	@Column(name = "name")
 	@NotNull
+	@Size(max = 255, min = 4)
 	private String name;
 	
 	@Column(name = "description")
+	@Size(max = 500)
 	private String description;
 	
 	@OneToMany(mappedBy = "role",
