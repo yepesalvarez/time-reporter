@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,10 +32,7 @@ public class UserController {
 	@Autowired
 	UserService userService;
 	
-	@ApiOperation(value = "Creates a new user in the system, only administrator users can perform this action", httpMethod = "POST")
-	@ApiImplicitParams({
-	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
-	})
+	@ApiOperation(value = "Creates a new user in the system", httpMethod = "POST")
 	@PostMapping
 	public UserDto saveUser(@Valid @RequestBody UserDto userDto) {	
 		return userService.saveUser(userDto);
@@ -74,7 +72,7 @@ public class UserController {
 	}
 	
 	@PreAuthorize("hasRole('ADMIN')")
-	@ApiOperation(value = "Removes a user in the system searching by id, only administrator users can perform this action", httpMethod = "DELETE")
+	@ApiOperation(value = "Removes an user in the system searching by id, only administrator users can perform this action", httpMethod = "DELETE")
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
 	})
@@ -83,14 +81,14 @@ public class UserController {
 		return userService.removeUser(id);
 	}
 	
-	@PreAuthorize("hasRole('ADMIN')")
-	@ApiOperation(value = "Removes a user in the system, only administrator users can perform this action", httpMethod = "DELETE")
+	@PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+	@ApiOperation(value = "Updates an user in the system", httpMethod = "PATCH")
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
 	})
-	@DeleteMapping
-	public String removeUser(@RequestBody UserDto userDto) {	
-		return userService.removeUser(userDto);
+	@PatchMapping
+	public UserDto updateUser(@RequestBody @Valid UserDto userDto) {
+		return userService.updateUser(userDto);
 	}
-
+	
 }

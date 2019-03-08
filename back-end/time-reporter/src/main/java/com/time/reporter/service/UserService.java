@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolationException;
-import javax.validation.Validator;
 
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.time.reporter.domain.dto.UserDto;
 import com.time.reporter.domain.enums.Roles;
@@ -39,10 +39,7 @@ public class UserService {
 	
 	@Autowired
 	private RoleService roleService;
-	
-	@Autowired
-    protected Validator validator;
-	
+
 	public static final String USER_REMOVED = "user successfully removed";
 	
 	public UserDto saveUser(UserDto userDto) {
@@ -54,7 +51,7 @@ public class UserService {
 		if(userDto.getRole() == null) {
 			userDto.setRole(Roles.USER.toString());
 		}else {
-			if(roleService.getRoleByName(userDto.getRole()) == null) {
+			if(roleService.getRoleByName(userDto.getRole().toUpperCase()) == null) {
 				LOGGER.error(new RoleDoesNotExistException().getMessage());
 				throw new RoleDoesNotExistException();
 			}
@@ -63,7 +60,13 @@ public class UserService {
 	}
 	
 	public UserDto getUserById(Long idUser) {
-		return userBuilder.userEntityToUserDto(userRepository.findById(idUser).orElseThrow(UserDoesNotExistException::new));
+		try {
+			return userBuilder.userEntityToUserDto(userRepository.findById(idUser).orElseThrow(UserDoesNotExistException::new));
+		} catch (MethodArgumentTypeMismatchException e) {
+			LOGGER.error(new MethodArgumentTypeMismatchException(e, e.getClass(), e.getName(), e.getParameter(), e.getCause()).getMessage());
+			throw new MethodArgumentTypeMismatchException(e, e.getClass(), e.getName(), e.getParameter(), e.getCause());
+		}
+		
 	}
 	
 	public List<UserDto> getAllUsers() {
@@ -73,16 +76,6 @@ public class UserService {
 	public List<UserDto> getAllUsers(int page, int size, String sort, String propertyOrderBy) {
 		return userRepository.findAll(PageRequest.of(page, size, Direction.fromString(sort), propertyOrderBy))
 				.stream().map(user -> userBuilder.userEntityToUserDto(user)).collect(Collectors.toList());
-	}
-	
-	public String removeUser(UserDto userDto) {
-		try {
-			userRepository.delete(userBuilder.userDtoToUserEntity(userDto));
-			return USER_REMOVED;
-		} catch (UserDoesNotExistException e) {
-			LOGGER.error(e);
-			throw new UserDoesNotExistException();
-		}
 	}
 	
 	public String removeUser(Long idUser) {
@@ -97,11 +90,18 @@ public class UserService {
 	
 	public UserDto updateUser(UserDto userDto) {
 		UserEntity userEntity = validateUserDto(userDto);
-		if( userEntity != null && (userDto.getId() == null || !userDto.getId().equals(userEntity.getId()))) {
-			LOGGER.error(new UserInvalidDataException().getMessage());
-			throw new UserInvalidDataException();
+		if (userEntity == null) {
+			LOGGER.error(new UserDoesNotExistException().getMessage() + " : " + userDto.getUsername());
+			throw new UserDoesNotExistException();
+		} else {
+			if(userDto.getId() == null || !userDto.getId().equals(userEntity.getId())
+					|| userDto.getRole() == null || userDto.getRole().isEmpty() || roleService.getRoleByName(userDto.getRole()) == null) {
+				LOGGER.error(new UserInvalidDataException().getMessage());
+				throw new UserInvalidDataException();
+			} else {
+				return persistUser(userDto);
+			}	
 		}
-		return persistUser(userDto);
 	}
 	
 	public UserEntity validateUserDto(UserDto userDto) {
@@ -110,7 +110,6 @@ public class UserService {
 			LOGGER.error(new UserInvalidDataException().getMessage());
 			throw new UserInvalidDataException();
 		}
-		validator.validate(userDto.getPassword());
 		return userRepository.findByUsername(userDto.getUsername());
 	}
 	

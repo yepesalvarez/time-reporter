@@ -8,6 +8,8 @@ public class ErrorMessage {
 	public ErrorMessage(Exception exception) {
 		this(exception.getClass().getSimpleName(), exception.getMessage());
 	}
+	
+	public ErrorMessage() {}
 
 	public ErrorMessage(String error, String description) {
 		this.error = error;

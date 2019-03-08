@@ -19,12 +19,17 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'mysql:mysql-connector-java'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+	testCompile group: 'com.h2database', name: 'h2', version: '1.4.198'
+	testCompile ('org.springframework.boot:spring-boot-starter-test'){
+		exclude group: "com.vaadin.external.google", module:"android-json"
+	}
+	testImplementation ('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: "com.vaadin.external.google", module:"android-json"
+	}
+	compile group: 'org.json', name: 'json', version: '20090211'
 	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
 	compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.2'
 	compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
 	compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.9.2'
-	compile group: 'org.passay', name: 'passay', version: '1.0'
-
+	
 }

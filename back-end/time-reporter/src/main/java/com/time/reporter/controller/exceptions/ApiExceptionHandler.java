@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.time.reporter.config.jwt.InvalidJwtAuthenticationException;
@@ -33,11 +34,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-		Throwable mostSpecificCause = ex.getMostSpecificCause();
         ErrorMessage errorMessage;
-        String exceptionName =  mostSpecificCause.getClass().getSimpleName();
-        String message = mostSpecificCause.getMessage();
-        errorMessage = new ErrorMessage(exceptionName, message);
+        RuntimeException exception =  new ParametersMissmatchException();
+        String message = exception.getMessage();
+        errorMessage = new ErrorMessage(exception.getClass().getSimpleName(), message);
         return new ResponseEntity<>(errorMessage, headers, status);
     }
 	
@@ -46,21 +46,25 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	                                                                HttpHeaders headers, HttpStatus status,
 	                                                                WebRequest request) {	
         ErrorMessage errorMessage;
-        String exceptionName =  PasswordNotAllowedException.class.getSimpleName();
-        String message = PasswordNotAllowedException.MESSAGE;
+        RuntimeException exception = new PasswordNotAllowedException();
+        String exceptionName = exception.getClass().getSimpleName();
+        String message = exception.getMessage();
         errorMessage = new ErrorMessage(exceptionName, message);
         return new ResponseEntity<>(errorMessage, headers, status);
 	}
-	
+		
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler({
 		UserInvalidDataException.class, UserDoesNotExistException.class
-		, BadCredentialsException.class, RoleDoesNotExistException.class
+		, BadCredentialsException.class, RoleDoesNotExistException.class, MethodArgumentTypeMismatchException.class
 	})
 	@ResponseBody
 	public ErrorMessage badRequest(Exception exception) {
+		if (exception.getClass().equals(MethodArgumentTypeMismatchException.class)) {
+			exception = new ParametersMissmatchException();
+		}
 		ErrorMessage errorMessage = new ErrorMessage(exception);
-		LOGGER_EXCEPTION.error(errorMessage);
+		LOGGER_EXCEPTION.error(errorMessage.getDescription());
 		return errorMessage;
 	}
 	
@@ -71,7 +75,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ResponseBody
 	public ErrorMessage forbidden(Exception exception) {
 		ErrorMessage errorMessage = new ErrorMessage(exception);
-		LOGGER_EXCEPTION.error(errorMessage);
+		LOGGER_EXCEPTION.error(errorMessage.getDescription());
 		return errorMessage;
 	}
 	
@@ -82,7 +86,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ResponseBody
 	public ErrorMessage unauthorized(Exception exception) {
 		ErrorMessage errorMessage = new ErrorMessage(exception);
-		LOGGER_EXCEPTION.error(errorMessage);
+		LOGGER_EXCEPTION.error(errorMessage.getDescription());
 		return errorMessage;
 	}
 	
@@ -93,7 +97,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ResponseBody
 	public ErrorMessage conflict(Exception exception) {
 		ErrorMessage errorMessage = new ErrorMessage(exception);
-		LOGGER_EXCEPTION.error(errorMessage);
+		LOGGER_EXCEPTION.error(errorMessage.getDescription());
 		return errorMessage;
 	}
 
