@@ -1,6 +1,14 @@
 package com.time.reporter.controller.exceptions;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import javax.annotation.Priority;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.jboss.logging.Logger;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +18,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,6 +29,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.time.reporter.config.jwt.InvalidJwtAuthenticationException;
 import com.time.reporter.domain.exceptions.PasswordNotAllowedException;
 import com.time.reporter.domain.exceptions.RoleDoesNotExistException;
@@ -28,7 +39,7 @@ import com.time.reporter.domain.exceptions.UserInvalidDataException;
 
 @ControllerAdvice
 @Priority(1)
-public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+public class ApiExceptionHandler extends ResponseEntityExceptionHandler implements AuthenticationEntryPoint {
 	
 	public static final Logger LOGGER_EXCEPTION = Logger.getLogger(ApiExceptionHandler.class);
 	
@@ -100,5 +111,27 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		LOGGER_EXCEPTION.error(errorMessage.getDescription());
 		return errorMessage;
 	}
+
+	@Override
+	public void commence(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException authException) throws IOException, ServletException {
+		LOGGER_EXCEPTION.error(authException.getMessage());
+		returnUnauthorizedResponse(response, authException);
+		
+	}
+	
+	public void returnUnauthorizedResponse(HttpServletResponse response, RuntimeException ex) throws IOException {
+		Map<String, String> errorResponse = new LinkedHashMap<>();
+    	ErrorMessage errorMessage;
+        errorMessage = new ErrorMessage(ex);
+		errorResponse.put("error", errorMessage.getError());
+		errorResponse.put("description", errorMessage.getDescription());
+		response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		ServletOutputStream writer = response.getOutputStream();
+		writer.println(new ObjectMapper().writeValueAsString(errorResponse));
+		writer.close();
+    }
+
+	
 
 }

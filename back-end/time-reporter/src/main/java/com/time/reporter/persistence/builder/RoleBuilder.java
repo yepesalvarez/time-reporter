@@ -23,7 +23,7 @@ public class RoleBuilder {
 	}
 	
 	public RoleEntity roleToRoleEntity(Role role) {
-		RoleEntity roleEntity = roleRepository.findByName(role.getName());
+		RoleEntity roleEntity = roleRepository.findByName(role.getName().toUpperCase());
 		if (roleEntity != null) {
 			return roleEntity;
 		}
@@ -34,7 +34,7 @@ public class RoleBuilder {
 	}
 
 	public RoleEntity roleStringToRoleEntity(String role) {
-		RoleEntity roleEntity = roleRepository.findByName(role);
+		RoleEntity roleEntity = roleRepository.findByName(role.toUpperCase());
 		if (roleEntity != null) {
 			return roleEntity;
 		} else {

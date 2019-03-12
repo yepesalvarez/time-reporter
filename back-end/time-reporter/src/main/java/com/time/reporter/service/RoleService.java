@@ -17,7 +17,7 @@ public class RoleService {
 	RoleBuilder roleBuilder;
 	
 	public Role getRoleByName(String roleName) {
-		return roleBuilder.roleEntityToRole(roleRepository.findByName(roleName));
+		return roleBuilder.roleEntityToRole(roleRepository.findByName(roleName.toUpperCase()));
 	}
 
 }

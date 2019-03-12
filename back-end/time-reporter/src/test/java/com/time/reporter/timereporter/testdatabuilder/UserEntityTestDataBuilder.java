@@ -5,7 +5,7 @@ import com.time.reporter.persistence.entity.UserEntity;
 
 public class UserEntityTestDataBuilder {
 	
-	static final Long ID = 999999999L;
+	static final Long ID = null;
 	static final String USERNAME = "userentity.test";
 	static final String PASSW = "$ASD2019*";
 	static final boolean ENABLED = true;

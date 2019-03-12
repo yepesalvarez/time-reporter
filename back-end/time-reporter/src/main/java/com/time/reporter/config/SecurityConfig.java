@@ -12,9 +12,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 
 import com.time.reporter.config.jwt.JwtConfigurer;
 import com.time.reporter.config.jwt.JwtTokenProvider;
+import com.time.reporter.controller.exceptions.ApiExceptionHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -39,6 +41,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers("/v2/api-docs", "/configuration/ui", "/swagger-resources/**", "/configuration/security", "/swagger-ui.html", "/webjars/**").permitAll()
 			.anyRequest().authenticated()
 			.and()
+			.exceptionHandling()
+			.authenticationEntryPoint(authenticationEntryPoint())
+			.and()
 			.apply(new JwtConfigurer(jwtTokenProvider));
 	}
 	
@@ -52,5 +57,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+	
+	@Bean
+	public AuthenticationEntryPoint authenticationEntryPoint(){
+	    return new ApiExceptionHandler();
+	}
 	
 }
