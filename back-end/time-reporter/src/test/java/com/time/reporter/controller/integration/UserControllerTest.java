@@ -21,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,10 +40,12 @@ import com.time.reporter.domain.exceptions.RoleDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserAlreadyExistException;
 import com.time.reporter.domain.exceptions.UserInvalidDataException;
 import com.time.reporter.persistence.entity.RoleEntity;
+import com.time.reporter.persistence.entity.UserEntity;
 import com.time.reporter.persistence.repository.RoleRepository;
 import com.time.reporter.persistence.repository.UserRepository;
 import com.time.reporter.timereporter.testdatabuilder.RoleEntityTestDataBuilder;
 import com.time.reporter.timereporter.testdatabuilder.UserDtoTestDataBuilder;
+import com.time.reporter.timereporter.testdatabuilder.UserEntityTestDataBuilder;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest (classes = { TimeReporterApplication.class })
@@ -60,6 +63,8 @@ public class UserControllerTest {
 	private RoleRepository roleRepository;
 	
 	private UserDto userDto;
+	private RoleEntity adminRoleEntity;
+	private UserEntity userEntity;
 	
 	static final String URL_CRUD_USERS = "http://localhost:8080/api/users";
 	static final String URL_LOGIN = "http://localhost:8080/login";
@@ -73,19 +78,22 @@ public class UserControllerTest {
 	static final String UNAUTHORIZED_MESSAGE = "Full authentication is required to access this resource";
 	static final String HEADER_AUTHORIZATION = "Authorization";
 	static final String JSON_WEB_TOKEN_PREFIX = "Bearer ";
-
+	static final String USER_NOT_ENABLED ="User is disabled";
+	static final String ADMIN_ROLE_NAME = "ADMIN";
+	
 	@Before
 	public void setUp() {
 		
 		RoleEntity userRoleEntity = new RoleEntityTestDataBuilder().build();
 		roleRepository.save(userRoleEntity);
-		RoleEntity roleEntityAdmin = new RoleEntityTestDataBuilder()
+		adminRoleEntity = new RoleEntityTestDataBuilder()
 				.withId(2L)
-				.withName("ADMIN")
+				.withName(ADMIN_ROLE_NAME)
 				.withDescription("ADMIN ROLE")
 				.build();
-		roleRepository.save(roleEntityAdmin);
+		adminRoleEntity = roleRepository.save(adminRoleEntity);
 		userDto = new UserDtoTestDataBuilder().build();
+		userEntity = new UserEntityTestDataBuilder().build();
 
 	}
 
@@ -148,7 +156,7 @@ public class UserControllerTest {
 	@Test
 	public void testSaveRepeatedUser() throws Exception {
 		
-		saveUser(userDto);
+		userRepository.save(userEntity);
 		MockHttpServletResponse result = saveUser(userDto);
 		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
 		
@@ -348,7 +356,7 @@ public class UserControllerTest {
 	}
 	
 	@Test
-	public void testGetUserById() throws Exception {
+	public void testGetUserByIdOk() throws Exception {
 		
 		saveUser(userDto);	
 		UserDto userDtoLogged = new ObjectMapper().readValue(doLogin(userDto).getContentAsString(), UserDto.class);
@@ -362,11 +370,27 @@ public class UserControllerTest {
 		assertEquals(idUserDtoLogged, userDtoResult.getId());
 
 	}
+	
+	@Test
+	public void testGetUserWithoutAuthorizationToken() throws Exception {
+		
+		userEntity = userRepository.save(userEntity);	
+		
+		MockHttpServletResponse result = getUser(null, userEntity.getId());
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertEquals(401, result.getStatus());
+		assertNotNull(errorMessage);
+		assertEquals(UNAUTHORIZED_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(InsufficientAuthenticationException.class);
+		
+	}
+
 
 	@Test
 	public void testGetAllUsersOk() throws Exception {
 		
-		userDto.setRole("ADMIN");
+		userDto.setRole(ADMIN_ROLE_NAME);
 		saveUser(userDto);
 		
 		MockHttpServletResponse result = getUsers(
@@ -376,7 +400,34 @@ public class UserControllerTest {
 		
 		assertEquals(200, result.getStatus());
 		assertFalse(usersDto.isEmpty());
-		assertNotNull(userDto.getId());
+		assertNotNull(usersDto.get(0).getId());
+	}
+	
+	@Test
+	public void testGetAllUsersWithNotEnabledAdmin() throws Exception {
+		
+		saveUser(userDto);
+		String userPassword = userDto.getPassword();
+		MockHttpServletResponse loginResult = doLogin(userDto);
+		userDto = new ObjectMapper().readValue(loginResult.getContentAsString(), UserDto.class);
+		userEntity = new UserEntityTestDataBuilder()
+				.withEnabled(false)
+				.withId(userDto.getId())
+				.withUsername(userDto.getUsername())
+				.withPassword(userPassword)
+				.withRoleEntity(adminRoleEntity)
+				.build();
+		userRepository.save(userEntity);
+		
+		MockHttpServletResponse result = getUsers(userDto.getToken());
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertNotNull(errorMessage);
+		assertEquals(401, result.getStatus());
+		assertEquals(USER_NOT_ENABLED, errorMessage.getDescription());
+		assertEquals(DisabledException.class.getSimpleName(), errorMessage.getError());
+		assertThatExceptionOfType(DisabledException.class);
+		
 	}
 	
 	@Test
@@ -397,19 +448,6 @@ public class UserControllerTest {
 		
 	}
 	
-	@Test
-	public void testGetAllUsersWithoutAnyAuthorization() throws Exception {
-		
-		MockHttpServletResponse result = getUsers(null);
-		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
-		
-		assertEquals(401, result.getStatus());
-		assertNotNull(errorMessage);
-		assertEquals(UNAUTHORIZED_MESSAGE, errorMessage.getDescription());
-		assertThatExceptionOfType(InsufficientAuthenticationException.class);
-		
-	}
-
 	@Test
 	public void testGetAllUsersIntIntStringString() {
 		
@@ -441,19 +479,30 @@ public class UserControllerTest {
 		RequestBuilder requestBuilder;
 		if(token!=null) {
 			requestBuilder = MockMvcRequestBuilders.get(URL_CRUD_USERS).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + token);
-		}else {
+		} else {
 			requestBuilder = MockMvcRequestBuilders.get(URL_CRUD_USERS);
 		}
 		return mockMvc.perform(requestBuilder).andReturn().getResponse();
 	}
 	
 	public MockHttpServletResponse getUser(String token, Long id) throws Exception {
-		RequestBuilder requestBuilder = MockMvcRequestBuilders.get(URL_CRUD_USERS + "/" + id).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + token);
+		RequestBuilder requestBuilder;
+		if(token!=null) {
+			requestBuilder = MockMvcRequestBuilders.get(URL_CRUD_USERS + "/" + id).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + token);
+		} else {
+			requestBuilder = MockMvcRequestBuilders.get(URL_CRUD_USERS + "/" + id);
+		}
 		return mockMvc.perform(requestBuilder).andReturn().getResponse();
 	}
 	
 	public MockHttpServletResponse deleteUser(String token, Long id) throws Exception {
 		RequestBuilder requestBuilder = MockMvcRequestBuilders.delete(URL_CRUD_USERS + "/" + id).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + token);
+		return mockMvc.perform(requestBuilder).andReturn().getResponse();
+	}
+	
+	public MockHttpServletResponse updateUser(UserDto updateUserDto) throws Exception {
+		RequestBuilder requestBuilder = MockMvcRequestBuilders.patch(URL_CRUD_USERS + "/" + updateUserDto.getId()).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + updateUserDto.getToken())
+				.contentType(MediaType.APPLICATION_JSON_UTF8).content(new JSONObject(updateUserDto).toString());
 		return mockMvc.perform(requestBuilder).andReturn().getResponse();
 	}
 	

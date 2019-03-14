@@ -132,6 +132,4 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler implemen
 		writer.close();
     }
 
-	
-
 }

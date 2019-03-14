@@ -4,7 +4,7 @@ import com.time.reporter.domain.dto.UserDto;
 
 public class UserDtoTestDataBuilder {
 	
-	static final Long ID = 999999L;
+	static final Long ID = null;
 	static final String USERNAME = "user.test";
 	static final String PASSW = "$Qwe123*";
 	static final String ROLE = "USER";
