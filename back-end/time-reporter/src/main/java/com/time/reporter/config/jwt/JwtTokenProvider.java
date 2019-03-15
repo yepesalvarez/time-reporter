@@ -34,7 +34,7 @@ public class JwtTokenProvider {
 	@Value("${security.jwt.token.expire-length:3600000}") //1h
     private long validityInMilliseconds = 3600000; 
 
-    @Autowired
+	@Autowired
     private UserDetailsService userDetailsService;
 
     @PostConstruct
@@ -44,6 +44,10 @@ public class JwtTokenProvider {
     
     public static final Logger LOGGER = Logger.getLogger(JwtTokenProvider.class);
 
+    public void setValidityInMilliseconds(long validityInMilliseconds) {
+		this.validityInMilliseconds = validityInMilliseconds;
+	}
+    
     public String createToken(String username, List<String> roles) {
 
         Claims claims = Jwts.claims().setSubject(username);

@@ -36,6 +36,7 @@ import com.time.reporter.domain.exceptions.RoleDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserAlreadyExistException;
 import com.time.reporter.domain.exceptions.UserDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserInvalidDataException;
+import com.time.reporter.domain.exceptions.UserNotAllowedToException;
 
 @ControllerAdvice
 @Priority(1)
@@ -81,7 +82,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler implemen
 	
 	@ResponseStatus(HttpStatus.FORBIDDEN)
 	@ExceptionHandler({
-		DisabledException.class, AccessDeniedException.class
+		DisabledException.class, AccessDeniedException.class, UserNotAllowedToException.class
 	})
 	@ResponseBody
 	public ErrorMessage forbidden(Exception exception) {

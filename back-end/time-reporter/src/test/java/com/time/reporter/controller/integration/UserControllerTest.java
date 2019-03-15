@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.file.AccessDeniedException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -31,6 +32,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.time.reporter.TimeReporterApplication;
+import com.time.reporter.config.jwt.InvalidJwtAuthenticationException;
+import com.time.reporter.config.jwt.JwtTokenProvider;
 import com.time.reporter.controller.exceptions.ErrorMessage;
 import com.time.reporter.controller.exceptions.ParametersMissmatchException;
 import com.time.reporter.domain.dto.UserDto;
@@ -38,7 +41,9 @@ import com.time.reporter.domain.enums.Roles;
 import com.time.reporter.domain.exceptions.PasswordNotAllowedException;
 import com.time.reporter.domain.exceptions.RoleDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserAlreadyExistException;
+import com.time.reporter.domain.exceptions.UserDoesNotExistException;
 import com.time.reporter.domain.exceptions.UserInvalidDataException;
+import com.time.reporter.domain.exceptions.UserNotAllowedToException;
 import com.time.reporter.persistence.entity.RoleEntity;
 import com.time.reporter.persistence.entity.UserEntity;
 import com.time.reporter.persistence.repository.RoleRepository;
@@ -62,24 +67,33 @@ public class UserControllerTest {
 	@Autowired
 	private RoleRepository roleRepository;
 	
+	@Autowired
+	private JwtTokenProvider tokenGenerator;
+	
 	private UserDto userDto;
 	private RoleEntity adminRoleEntity;
 	private UserEntity userEntity;
+	private String token;
 	
 	static final String URL_CRUD_USERS = "http://localhost:8080/api/users";
 	static final String URL_LOGIN = "http://localhost:8080/login";
-	static final String USER_NOT_VALID_PARAMETERS_MESSAGE = "Not valid user's parameters";
-	static final String USER_ALREADY_EXIST_MESSAGE = "This user already exists in the system";
-	static final String USER_PASSW_NOT_VALID_MESSAGE = "Password does not fulfill the security policy";
 	static final String USER_PASSW_NOT_VALID = "abc123";
+	static final String ADMIN_ROLE_NAME = "ADMIN";
+	static final String HEADER_AUTHORIZATION = "Authorization";
+	static final String JSON_WEB_TOKEN_PREFIX = "Bearer ";
 	static final String NOT_VALID_JSON_PARAMETERS_MESSAGE = "Request's parameters do not match the expected types or values";
 	static final String NOT_VALID_ROLE_MESSAGE = "Role does not exist";
 	static final String ACCESS_DENIED_MESSAGE = "Access is denied";
 	static final String UNAUTHORIZED_MESSAGE = "Full authentication is required to access this resource";
-	static final String HEADER_AUTHORIZATION = "Authorization";
-	static final String JSON_WEB_TOKEN_PREFIX = "Bearer ";
-	static final String USER_NOT_ENABLED ="User is disabled";
-	static final String ADMIN_ROLE_NAME = "ADMIN";
+	static final String USER_NOT_VALID_PARAMETERS_MESSAGE = "Not valid user's parameters";
+	static final String USER_ALREADY_EXIST_MESSAGE = "This user already exists in the system";
+	static final String USER_PASSW_NOT_VALID_MESSAGE = "Password does not fulfill the security policy";
+	static final String USER_NOT_ENABLED_MESSAGE ="User is disabled";
+	static final String NON_EXISTENT_USER_MESSAGE = "User does not exist";
+	static final String NOT_VALID_TOKEN_MESSAGE = "Expired or invalid JWT token";
+	static final String USER_NOT_ALLOWED_MESSAGE = "Logged user has not authority to perform the action";
+	
+	
 	
 	@Before
 	public void setUp() {
@@ -94,6 +108,8 @@ public class UserControllerTest {
 		adminRoleEntity = roleRepository.save(adminRoleEntity);
 		userDto = new UserDtoTestDataBuilder().build();
 		userEntity = new UserEntityTestDataBuilder().build();
+		tokenGenerator.setValidityInMilliseconds(6000);
+		token = tokenGenerator.createToken(userEntity.getUsername(), Arrays.asList(ADMIN_ROLE_NAME));
 
 	}
 
@@ -135,7 +151,7 @@ public class UserControllerTest {
 	}
 	
 	@Test
-	public void testSaveUserTooLongUserName() throws Exception {
+	public void testSaveUserStringTooLongForField() throws Exception {
 		
 		userDto.setUsername("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor."
 				+ " Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."
@@ -357,45 +373,108 @@ public class UserControllerTest {
 	
 	@Test
 	public void testGetUserByIdOk() throws Exception {
+ 
+		Long idUser = userRepository.save(userEntity).getId();
 		
-		saveUser(userDto);	
-		UserDto userDtoLogged = new ObjectMapper().readValue(doLogin(userDto).getContentAsString(), UserDto.class);
-		Long idUserDtoLogged = userDtoLogged.getId();
-		
-		MockHttpServletResponse result = getUser(userDtoLogged.getToken(), idUserDtoLogged);
+		MockHttpServletResponse result = getUser(token, idUser);
 		UserDto userDtoResult = new ObjectMapper().readValue(result.getContentAsString(), UserDto.class);
 		
 		assertEquals(200, result.getStatus());
 		assertNotNull(userDtoResult);
-		assertEquals(idUserDtoLogged, userDtoResult.getId());
+		assertEquals(userEntity.getId(), userDtoResult.getId());
+
+	}
+	
+	@Test
+	public void testGetUserByIdNonExistent() throws Exception {
+ 
+		userEntity.setRole(adminRoleEntity);
+		userRepository.save(userEntity);
+		Long idUser = 999999999999L;
+		
+		MockHttpServletResponse result = getUser(token, idUser);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertNotNull(errorMessage);
+		assertEquals(400, result.getStatus());
+		assertEquals(NON_EXISTENT_USER_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(UserDoesNotExistException.class);
+		assertEquals(UserDoesNotExistException.class.getSimpleName(), errorMessage.getError());
+
+	}
+	
+	@Test
+	public void testGetUserByIdNeitherByAdminNorAllowedUser() throws Exception {
+ 
+		userRepository.save(userEntity);
+		Long idUser = 999999999999L;
+		
+		MockHttpServletResponse result = getUser(token, idUser);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertNotNull(errorMessage);
+		assertEquals(403, result.getStatus());
+		assertEquals(USER_NOT_ALLOWED_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(UserNotAllowedToException.class);
+		assertEquals(UserNotAllowedToException.class.getSimpleName(), errorMessage.getError());
+
+	}
+	
+	@Test
+	public void testGetUserByIdStringForId() throws Exception {
+ 
+		userRepository.save(userEntity);
+		RequestBuilder requestBuilder = MockMvcRequestBuilders.get(URL_CRUD_USERS + "/" + "string")
+				.header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + token);
+		
+		MockHttpServletResponse result = mockMvc.perform(requestBuilder).andReturn().getResponse();
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertNotNull(errorMessage);
+		assertEquals(400, result.getStatus());
+		assertEquals(NOT_VALID_JSON_PARAMETERS_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(ParametersMissmatchException.class);
+		assertEquals(ParametersMissmatchException.class.getSimpleName(), errorMessage.getError());
 
 	}
 	
 	@Test
 	public void testGetUserWithoutAuthorizationToken() throws Exception {
 		
-		userEntity = userRepository.save(userEntity);	
+		Long idUser = userRepository.save(userEntity).getId();
 		
-		MockHttpServletResponse result = getUser(null, userEntity.getId());
+		MockHttpServletResponse result = getUser(null, idUser);
 		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
 		
 		assertEquals(401, result.getStatus());
 		assertNotNull(errorMessage);
 		assertEquals(UNAUTHORIZED_MESSAGE, errorMessage.getDescription());
 		assertThatExceptionOfType(InsufficientAuthenticationException.class);
+		assertEquals(InsufficientAuthenticationException.class.getSimpleName(), errorMessage.getError());
+		
+	}
+	
+	@Test
+	public void testGetAllUsersWithoutAuthorizationToken() throws Exception {
+		
+		MockHttpServletResponse result = getUsers(null);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertEquals(401, result.getStatus());
+		assertNotNull(errorMessage);
+		assertEquals(UNAUTHORIZED_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(InsufficientAuthenticationException.class);
+		assertEquals(InsufficientAuthenticationException.class.getSimpleName(), errorMessage.getError());
 		
 	}
 
-
 	@Test
 	public void testGetAllUsersOk() throws Exception {
+
+		userEntity.setRole(adminRoleEntity);
+		userRepository.save(userEntity);
 		
-		userDto.setRole(ADMIN_ROLE_NAME);
-		saveUser(userDto);
-		
-		MockHttpServletResponse result = getUsers(
-				new ObjectMapper().readValue(doLogin(userDto).getContentAsString(), UserDto.class)
-				.getToken());
+		MockHttpServletResponse result = getUsers(token);
 		List<UserDto> usersDto = new ObjectMapper().readValue(result.getContentAsString(), new TypeReference<List<UserDto>>() { });
 		
 		assertEquals(200, result.getStatus());
@@ -406,38 +485,41 @@ public class UserControllerTest {
 	@Test
 	public void testGetAllUsersWithNotEnabledAdmin() throws Exception {
 		
-		saveUser(userDto);
-		String userPassword = userDto.getPassword();
-		MockHttpServletResponse loginResult = doLogin(userDto);
-		userDto = new ObjectMapper().readValue(loginResult.getContentAsString(), UserDto.class);
-		userEntity = new UserEntityTestDataBuilder()
-				.withEnabled(false)
-				.withId(userDto.getId())
-				.withUsername(userDto.getUsername())
-				.withPassword(userPassword)
-				.withRoleEntity(adminRoleEntity)
-				.build();
-		userRepository.save(userEntity);
-		
-		MockHttpServletResponse result = getUsers(userDto.getToken());
+		userEntity.setRole(adminRoleEntity);
+		userEntity.setEnabled(false);
+		userEntity = userRepository.save(userEntity);
+				
+		MockHttpServletResponse result = getUsers(token);
 		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
 		
 		assertNotNull(errorMessage);
 		assertEquals(401, result.getStatus());
-		assertEquals(USER_NOT_ENABLED, errorMessage.getDescription());
+		assertEquals(USER_NOT_ENABLED_MESSAGE, errorMessage.getDescription());
 		assertEquals(DisabledException.class.getSimpleName(), errorMessage.getError());
 		assertThatExceptionOfType(DisabledException.class);
 		
 	}
 	
 	@Test
-	public void testGetAllUsersWithNotAuthorizedRole() throws Exception {
-
-		saveUser(userDto);
+	public void testGetAllUsersWithRemovedUser() throws Exception {	
 		
-		MockHttpServletResponse result = getUsers(
-				new ObjectMapper().readValue(doLogin(userDto).getContentAsString(), UserDto.class)
-				.getToken());
+		MockHttpServletResponse result = getUsers(token);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertNotNull(errorMessage);
+		assertEquals(401, result.getStatus());
+		assertEquals(NON_EXISTENT_USER_MESSAGE, errorMessage.getDescription());
+		assertEquals(UserDoesNotExistException.class.getSimpleName(), errorMessage.getError());
+		assertThatExceptionOfType(UserDoesNotExistException.class);
+		
+	}
+	
+	@Test
+	public void testGetAllUsersWithoutAuthorizedRole() throws Exception {
+
+		userRepository.save(userEntity);
+		
+		MockHttpServletResponse result = getUsers(token);
 		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
 		
 		assertEquals(403, result.getStatus());
@@ -445,6 +527,39 @@ public class UserControllerTest {
 		assertEquals(ACCESS_DENIED_MESSAGE, errorMessage.getDescription());
 		assertThatExceptionOfType(AccessDeniedException.class);
 		assertEquals(AccessDeniedException.class.getSimpleName(), errorMessage.getError());
+		
+	}
+	
+	@Test
+	public void testGetAllUsersWithNotValidToken() throws Exception {
+		
+		token = "not-valid-token-example";
+		
+		MockHttpServletResponse result = getUsers(token);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertEquals(401, result.getStatus());
+		assertNotNull(errorMessage);
+		assertEquals(NOT_VALID_TOKEN_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(InvalidJwtAuthenticationException.class);
+		assertEquals(InvalidJwtAuthenticationException.class.getSimpleName(), errorMessage.getError());
+		
+	}
+	
+	@Test
+	public void testGetAllUsersWithExpiredToken() throws Exception {
+		
+		tokenGenerator.setValidityInMilliseconds(0);
+		token = tokenGenerator.createToken(userEntity.getUsername(), Arrays.asList(ADMIN_ROLE_NAME));
+		
+		MockHttpServletResponse result = getUsers(token);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertEquals(401, result.getStatus());
+		assertNotNull(errorMessage);
+		assertEquals(NOT_VALID_TOKEN_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(InvalidJwtAuthenticationException.class);
+		assertEquals(InvalidJwtAuthenticationException.class.getSimpleName(), errorMessage.getError());
 		
 	}
 	
@@ -457,9 +572,78 @@ public class UserControllerTest {
 	public void testRemoveUserById() {
 		
 	}
+	
+	@Test
+	public void testUpdateUserWithoutAuthorization() throws Exception {
+		
+		userRepository.save(userEntity);
+		UserEntity otherUser = new UserEntity();
+		otherUser.setUsername("user.test2");
+		otherUser.setPassword("*Qwe123*");
+		otherUser.setRole(adminRoleEntity);
+		Long idOtherUser = userRepository.save(otherUser).getId();
+		
+		
+		MockHttpServletResponse result = updateUser(userDto, idOtherUser, token);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertEquals(403, result.getStatus());
+		assertNotNull(errorMessage);
+		assertEquals(USER_NOT_ALLOWED_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(UserNotAllowedToException.class);
+		assertEquals(UserNotAllowedToException.class.getSimpleName(), errorMessage.getError());
+		
+	}
+	
+	@Test
+	public void testUpdateUserUsername() throws Exception {
+		
+		Long idUser = userRepository.save(userEntity).getId();
+		String newUserName = "new.username";
+		userDto.setUsername(newUserName);
+		userDto.setId(idUser);
+		
+		MockHttpServletResponse result = updateUser(userDto, idUser, token);
+		UserDto userDtoResult = new ObjectMapper().readValue(result.getContentAsString(), UserDto.class);
+		
+		assertEquals(200, result.getStatus());
+		assertNotNull(userDtoResult);
+		assertNotNull(userRepository.findByUsername(newUserName));
+		assertEquals(idUser, userRepository.findByUsername(newUserName).getId());
+		
+	}
 
 	@Test
-	public void testUpdateUser() {
+	public void testUpdateUserRole() throws Exception {
+		
+		Long idUser = userRepository.save(userEntity).getId();
+		userDto.setRole(ADMIN_ROLE_NAME);
+		userDto.setId(idUser);
+		
+		MockHttpServletResponse result = updateUser(userDto, idUser, token);
+		UserDto userDtoResult = new ObjectMapper().readValue(result.getContentAsString(), UserDto.class);
+		
+		assertEquals(200, result.getStatus());
+		assertNotNull(userDtoResult);
+		assertEquals(ADMIN_ROLE_NAME, userDtoResult.getRole());
+		
+	}
+	
+	@Test
+	public void testUpdateUserPasswordWithNotValidPassword() throws Exception {
+		
+		Long idUser = userRepository.save(userEntity).getId();
+		userDto.setPassword(USER_PASSW_NOT_VALID);
+		userDto.setId(idUser);
+		
+		MockHttpServletResponse result = updateUser(userDto, idUser, token);
+		ErrorMessage errorMessage = new ObjectMapper().readValue(result.getContentAsString(), ErrorMessage.class);
+		
+		assertNotNull(errorMessage);
+		assertEquals(400, result.getStatus());
+		assertEquals(USER_PASSW_NOT_VALID_MESSAGE, errorMessage.getDescription());
+		assertThatExceptionOfType(PasswordNotAllowedException.class);
+		assertEquals(PasswordNotAllowedException.class.getSimpleName(), errorMessage.getError());
 		
 	}
 	
@@ -500,15 +684,9 @@ public class UserControllerTest {
 		return mockMvc.perform(requestBuilder).andReturn().getResponse();
 	}
 	
-	public MockHttpServletResponse updateUser(UserDto updateUserDto) throws Exception {
-		RequestBuilder requestBuilder = MockMvcRequestBuilders.patch(URL_CRUD_USERS + "/" + updateUserDto.getId()).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + updateUserDto.getToken())
+	public MockHttpServletResponse updateUser(UserDto updateUserDto, Long idUser, String userToken) throws Exception {
+		RequestBuilder requestBuilder = MockMvcRequestBuilders.patch(URL_CRUD_USERS + "/" + idUser).header(HEADER_AUTHORIZATION, JSON_WEB_TOKEN_PREFIX + userToken)
 				.contentType(MediaType.APPLICATION_JSON_UTF8).content(new JSONObject(updateUserDto).toString());
-		return mockMvc.perform(requestBuilder).andReturn().getResponse();
-	}
-	
-	public MockHttpServletResponse doLogin(UserDto userDto) throws Exception {
-		RequestBuilder requestBuilder = MockMvcRequestBuilders.post(URL_LOGIN)
-				.contentType(MediaType.APPLICATION_JSON_UTF8).content(new JSONObject(userDto).toString());
 		return mockMvc.perform(requestBuilder).andReturn().getResponse();
 	}
 

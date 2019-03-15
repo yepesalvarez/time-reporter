@@ -86,9 +86,9 @@ public class UserController {
 	@ApiImplicitParams({
 	    @ApiImplicitParam(name = "Authorization", value = "Authorization token", dataType = "string", paramType = "header")
 	})
-	@PatchMapping
-	public UserDto updateUser(@RequestBody @Valid UserDto userDto) {
-		return userService.updateUser(userDto);
+	@PatchMapping("/{id}")
+	public UserDto updateUser(@PathVariable("id") Long id, @RequestBody @Valid UserDto userDto) {
+		return userService.updateUser(id, userDto);
 	}
 	
 }

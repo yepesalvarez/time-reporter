@@ -76,7 +76,6 @@ public class UserEntity extends AbstractEntity {
 		final UserEntity otherUserEntity = (UserEntity) object; 
 		return new EqualsBuilder()
 				.append(this.getId(), otherUserEntity.getId())
-				.append(this.getUsername(), otherUserEntity.getUsername())
 				.isEquals();
 	}
 	
@@ -84,7 +83,6 @@ public class UserEntity extends AbstractEntity {
 	public int hashCode() {
 		return new HashCodeBuilder()
 				.append(this.id)
-				.append(this.getUsername())
 				.toHashCode();
 	}
 	

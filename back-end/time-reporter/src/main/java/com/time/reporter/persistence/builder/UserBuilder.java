@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 
 import com.time.reporter.domain.User;
 import com.time.reporter.domain.dto.UserDto;
+import com.time.reporter.domain.exceptions.UserDoesNotExistException;
 import com.time.reporter.persistence.entity.UserEntity;
 import com.time.reporter.persistence.repository.UserRepository;
 
@@ -49,7 +50,11 @@ public class UserBuilder {
 	public UserEntity userDtoToUserEntity(UserDto userDto) {
 		UserEntity userEntity = userRepository.findByUsername(userDto.getUsername());
 		if(userEntity == null) {
-			userEntity = new UserEntity();
+			if(userDto.getId() != null) {
+				userEntity = userRepository.findById(userDto.getId()).orElseThrow(UserDoesNotExistException::new);
+			} else {
+				userEntity = new UserEntity();
+			}
 		}
 		userEntity.setUsername(userDto.getUsername());
 		userEntity.setPassword(userDto.getPassword());
